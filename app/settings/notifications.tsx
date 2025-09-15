@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Switch, Alert } from 'react-native';
-import { ArrowLeft, Bell, Clock, Users, Zap } from 'lucide-react-native';
+import { ArrowLeft, Bell, Clock, Users, MessageSquareText } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/context/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationService from '@/services/NotificationService';
 import * as Notifications from 'expo-notifications';
+import { DatabaseService } from '@/services/DatabaseService';
+import { scheduleScheduledText, cancelById } from '@/services/Scheduler';
 
 export default function NotificationsSettings() {
   const router = useRouter();
@@ -13,6 +15,7 @@ export default function NotificationsSettings() {
   
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [randomNotificationsEnabled, setRandomNotificationsEnabled] = useState(false);
+  const [scheduledTextNotificationsEnabled, setScheduledTextNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const theme = {
@@ -40,6 +43,11 @@ export default function NotificationsSettings() {
       const randomSaved = await AsyncStorage.getItem('notifications_random_enabled');
       if (randomSaved !== null) {
         setRandomNotificationsEnabled(JSON.parse(randomSaved));
+      }
+      
+      const scheduledTextSaved = await AsyncStorage.getItem('notifications_scheduled_texts_enabled');
+      if (scheduledTextSaved !== null) {
+        setScheduledTextNotificationsEnabled(JSON.parse(scheduledTextSaved));
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);
@@ -128,6 +136,99 @@ export default function NotificationsSettings() {
     }
   };
 
+  const handleScheduledTextNotificationsToggle = async (value: boolean) => {
+    try {
+      await AsyncStorage.setItem('notifications_scheduled_texts_enabled', JSON.stringify(value));
+      setScheduledTextNotificationsEnabled(value);
+      
+      if (value) {
+        // If enabling scheduled text notifications, check current permission status
+        const { status } = await Notifications.getPermissionsAsync();
+        
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permission Required',
+            'Please enable notifications in your device settings to receive scheduled text reminders.',
+            [{ text: 'OK' }]
+          );
+          setScheduledTextNotificationsEnabled(false);
+          await AsyncStorage.setItem('notifications_scheduled_texts_enabled', JSON.stringify(false));
+        } else {
+          // Permissions are granted, schedule notifications for all unsent scheduled texts
+          await NotificationService.init();
+          
+          try {
+            const allScheduledTexts = await DatabaseService.getAllScheduledTexts();
+            const unsentTexts = allScheduledTexts.filter(text => !text.sent);
+            
+            let scheduledCount = 0;
+            for (const text of unsentTexts) {
+              try {
+                // Parse the scheduled date and create proper Date object
+                const scheduledDate = new Date(text.scheduledFor);
+                
+                // Only schedule if the date is in the future
+                if (scheduledDate > new Date()) {
+                  const result = await scheduleScheduledText({
+                    messageId: text.id.toString(),
+                    phoneNumber: text.phoneNumber,
+                    message: text.message,
+                    datePick: scheduledDate,
+                    timePick: scheduledDate,
+                  });
+                  
+                  // Update the notification ID in the database
+                  if (result.id) {
+                    await DatabaseService.updateScheduledTextNotificationId(text.id, result.id);
+                    scheduledCount++;
+                  }
+                }
+              } catch (textError) {
+                console.error('Failed to schedule notification for text:', text.id, textError);
+              }
+            }
+            
+            Alert.alert(
+              'Scheduled Text Notifications Enabled',
+              `You will now receive notifications for your scheduled texts. ${scheduledCount} notifications have been set up.`,
+              [{ text: 'OK' }]
+            );
+          } catch (error) {
+            console.error('Error scheduling text notifications:', error);
+            Alert.alert('Error', 'Failed to set up scheduled text notifications');
+          }
+        }
+      } else {
+        // If disabling scheduled text notifications, cancel all scheduled text notifications
+        try {
+          const allScheduledTexts = await DatabaseService.getAllScheduledTexts();
+          const unsentTexts = allScheduledTexts.filter(text => !text.sent);
+          
+          let cancelledCount = 0;
+          for (const text of unsentTexts) {
+            if (text.notificationId) {
+              await cancelById(text.notificationId);
+              await DatabaseService.updateScheduledTextNotificationId(text.id, null);
+              cancelledCount++;
+            }
+          }
+          
+          Alert.alert(
+            'Scheduled Text Notifications Disabled',
+            `You will no longer receive notifications for scheduled texts. ${cancelledCount} notifications have been cancelled.`,
+            [{ text: 'OK' }]
+          );
+        } catch (error) {
+          console.error('Error cancelling text notifications:', error);
+          Alert.alert('Error', 'Failed to cancel scheduled text notifications');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating scheduled text notification settings:', error);
+      Alert.alert('Error', 'Failed to update notification settings');
+    }
+  };
+
   const notificationOptions = [
     {
       key: 'reminders_manual',
@@ -150,14 +251,14 @@ export default function NotificationsSettings() {
       available: true
     },
     {
-      key: 'reminders_smart',
-      title: 'Reminders (Smart)',
-      subtitle: 'Let ARMi automatically schedule reminders for you',
-      icon: Zap,
+      key: 'scheduled_texts',
+      title: 'Scheduled Texts',
+      subtitle: 'Get notified when it\'s time to send a scheduled text',
+      icon: MessageSquareText,
       color: '#8B5CF6',
-      enabled: false,
-      onToggle: null,
-      available: false
+      enabled: scheduledTextNotificationsEnabled,
+      onToggle: handleScheduledTextNotificationsToggle,
+      available: true
     },
     {
       key: 'smart_checkins',
