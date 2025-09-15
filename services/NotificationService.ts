@@ -123,142 +123,65 @@ class NotificationServiceClass {
 
   private generateRandomNotificationTimesForToday(): { amTime: Date | null, pmTime: Date | null } {
     const now = new Date();
-    console.log('🔍 TIME DEBUG - Current time:', now.toLocaleString());
-    console.log('🔍 TIME DEBUG - Current time ISO:', now.toISOString());
-    console.log('🔍 TIME DEBUG - Current time Unix:', now.getTime());
+    console.log('🔔 RANDOM NOTIF - Current time:', now.toLocaleString());
     
-    // Create a fresh date object for today to avoid carrying over time components
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset to start of day
-    console.log('🔍 TIME DEBUG - Today start of day:', today.toLocaleString());
+    // Morning window: 9:30 AM - 10:30 AM
+    const morningStart = new Date();
+    morningStart.setHours(9, 30, 0, 0);
+    const morningEnd = new Date();
+    morningEnd.setHours(10, 30, 0, 0);
     
-    // Generate AM time (10:00 AM - 12:59 PM)
+    // Evening window: 7:30 PM - 8:30 PM
+    const eveningStart = new Date();
+    eveningStart.setHours(19, 30, 0, 0);
+    const eveningEnd = new Date();
+    eveningEnd.setHours(20, 30, 0, 0);
+    
+    // Generate random AM time within morning window
     let amTime: Date | null = null;
-    const amStartHour = 10; // 10 AM
-    const amEndHour = 13;   // 1 PM (exclusive, so up to 12:59 PM)
+    const morningWindowMs = morningEnd.getTime() - morningStart.getTime(); // 1 hour in milliseconds
+    const randomMorningOffset = Math.floor(Math.random() * morningWindowMs);
+    const generatedMorningTime = new Date(morningStart.getTime() + randomMorningOffset);
     
-    // Check if we can still schedule an AM notification today
-    const amCutoff = new Date();
-    amCutoff.setHours(amEndHour, 0, 0, 0);
-    console.log('🔍 TIME DEBUG - AM cutoff time:', amCutoff.toLocaleString());
+    console.log('🔔 RANDOM NOTIF - Generated morning time:', generatedMorningTime.toLocaleString());
     
-    if (now < amCutoff) {
-      // We can schedule AM for today
-      const amDate = new Date();
-      const randomAmHour = Math.floor(Math.random() * (amEndHour - amStartHour)) + amStartHour;
-      const randomAmMinute = Math.floor(Math.random() * 60);
-      amDate.setHours(randomAmHour, randomAmMinute, 0, 0);
-      
-      console.log('🔍 TIME DEBUG - Generated AM time for today:', amDate.toLocaleString());
-      console.log('🔍 TIME DEBUG - AM time ISO:', amDate.toISOString());
-      
-      // Ensure it's at least 5 minutes from now
-      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-      console.log('🔍 TIME DEBUG - Five minutes from now:', fiveMinutesFromNow.toLocaleString());
-      
-      if (amDate <= fiveMinutesFromNow) {
-        console.log('🔍 TIME DEBUG - AM time too soon, scheduling for tomorrow');
-        // If too soon, schedule for next available AM slot
-        const nextDay = new Date();
-        nextDay.setDate(nextDay.getDate() + 1);
-        nextDay.setHours(randomAmHour, randomAmMinute, 0, 0);
-        amTime = nextDay;
-        console.log('🔍 TIME DEBUG - Adjusted AM time for tomorrow:', amTime.toLocaleString());
-      } else {
-        amTime = amDate;
-        console.log('🔍 TIME DEBUG - Final AM time for today:', amTime.toLocaleString());
-      }
+    // Check if morning time has passed or is too soon (less than 5 minutes from now)
+    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+    
+    if (generatedMorningTime <= fiveMinutesFromNow) {
+      // Schedule for tomorrow's morning window
+      const tomorrowMorning = new Date(generatedMorningTime);
+      tomorrowMorning.setDate(tomorrowMorning.getDate() + 1);
+      amTime = tomorrowMorning;
+      console.log('🔔 RANDOM NOTIF - Morning time passed/too soon, scheduled for tomorrow:', amTime.toLocaleString());
     } else {
-      console.log('🔍 TIME DEBUG - Past AM cutoff, scheduling AM for tomorrow');
-      // Schedule AM for tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const randomAmHour = Math.floor(Math.random() * (amEndHour - amStartHour)) + amStartHour;
-      const randomAmMinute = Math.floor(Math.random() * 60);
-      tomorrow.setHours(randomAmHour, randomAmMinute, 0, 0);
-      amTime = tomorrow;
-      console.log('🔍 TIME DEBUG - Final AM time for tomorrow:', amTime.toLocaleString());
+      amTime = generatedMorningTime;
+      console.log('🔔 RANDOM NOTIF - Morning time scheduled for today:', amTime.toLocaleString());
     }
     
-    // Generate PM time (2:00 PM - 7:59 PM)
+    // Generate random PM time within evening window
     let pmTime: Date | null = null;
-    const pmStartHour = 14; // 2 PM
-    const pmEndHour = 20;   // 8 PM (exclusive, so up to 7:59 PM)
+    const eveningWindowMs = eveningEnd.getTime() - eveningStart.getTime(); // 1 hour in milliseconds
+    const randomEveningOffset = Math.floor(Math.random() * eveningWindowMs);
+    const generatedEveningTime = new Date(eveningStart.getTime() + randomEveningOffset);
     
-    // Check if we can still schedule a PM notification today
-    const pmCutoff = new Date();
-    pmCutoff.setHours(pmEndHour, 0, 0, 0);
-    console.log('🔍 TIME DEBUG - PM cutoff time:', pmCutoff.toLocaleString());
+    console.log('🔔 RANDOM NOTIF - Generated evening time:', generatedEveningTime.toLocaleString());
     
-    if (now < pmCutoff) {
-      // We can schedule PM for today
-      const pmDate = new Date();
-      const randomPmHour = Math.floor(Math.random() * (pmEndHour - pmStartHour)) + pmStartHour;
-      const randomPmMinute = Math.floor(Math.random() * 60);
-      pmDate.setHours(randomPmHour, randomPmMinute, 0, 0);
-      
-      console.log('🔍 TIME DEBUG - Generated PM time for today:', pmDate.toLocaleString());
-      console.log('🔍 TIME DEBUG - PM time ISO:', pmDate.toISOString());
-      
-      // Ensure it's at least 5 minutes from now
-      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-      
-      if (pmDate <= fiveMinutesFromNow) {
-        console.log('🔍 TIME DEBUG - PM time too soon, scheduling for tomorrow');
-        // If too soon, schedule for next available PM slot
-        const nextDay = new Date();
-        nextDay.setDate(nextDay.getDate() + 1);
-        nextDay.setHours(randomPmHour, randomPmMinute, 0, 0);
-        pmTime = nextDay;
-        console.log('🔍 TIME DEBUG - Adjusted PM time for tomorrow:', pmTime.toLocaleString());
-      } else {
-        pmTime = pmDate;
-        console.log('🔍 TIME DEBUG - Final PM time for today:', pmTime.toLocaleString());
-      }
+    // Check if evening time has passed or is too soon
+    if (generatedEveningTime <= fiveMinutesFromNow) {
+      // Schedule for tomorrow's evening window
+      const tomorrowEvening = new Date(generatedEveningTime);
+      tomorrowEvening.setDate(tomorrowEvening.getDate() + 1);
+      pmTime = tomorrowEvening;
+      console.log('🔔 RANDOM NOTIF - Evening time passed/too soon, scheduled for tomorrow:', pmTime.toLocaleString());
     } else {
-      console.log('🔍 TIME DEBUG - Past PM cutoff, scheduling PM for tomorrow');
-      // Schedule PM for tomorrow
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const randomPmHour = Math.floor(Math.random() * (pmEndHour - pmStartHour)) + pmStartHour;
-      const randomPmMinute = Math.floor(Math.random() * 60);
-      tomorrow.setHours(randomPmHour, randomPmMinute, 0, 0);
-      pmTime = tomorrow;
-      console.log('🔍 TIME DEBUG - Final PM time for tomorrow:', pmTime.toLocaleString());
+      pmTime = generatedEveningTime;
+      console.log('🔔 RANDOM NOTIF - Evening time scheduled for today:', pmTime.toLocaleString());
     }
     
-    // Ensure AM and PM times are at least 30 minutes apart if on the same day
-    if (amTime && pmTime && amTime.toDateString() === pmTime.toDateString()) {
-      console.log('🔍 TIME DEBUG - Both notifications on same day, checking spacing');
-      const timeDifference = Math.abs(pmTime.getTime() - amTime.getTime());
-      const thirtyMinutes = 30 * 60 * 1000;
-      console.log('🔍 TIME DEBUG - Time difference (minutes):', timeDifference / (1000 * 60));
-      
-      if (timeDifference < thirtyMinutes) {
-        console.log('🔍 TIME DEBUG - Times too close, adjusting PM time');
-        // Adjust PM time to be at least 30 minutes after AM time
-        pmTime = new Date(amTime.getTime() + thirtyMinutes);
-        
-        // If this pushes PM time past 8 PM, move it to tomorrow
-        if (pmTime.getHours() >= 20) {
-          console.log('🔍 TIME DEBUG - Adjusted PM time past 8 PM, moving to tomorrow');
-          const tomorrow = new Date();
-          tomorrow.setDate(today.getDate() + 1);
-          const randomPmHour = Math.floor(Math.random() * (pmEndHour - pmStartHour)) + pmStartHour;
-          const randomPmMinute = Math.floor(Math.random() * 60);
-          tomorrow.setHours(randomPmHour, randomPmMinute, 0, 0);
-          pmTime = tomorrow;
-          console.log('🔍 TIME DEBUG - Final adjusted PM time for tomorrow:', pmTime.toLocaleString());
-        } else {
-          console.log('🔍 TIME DEBUG - Final adjusted PM time for today:', pmTime.toLocaleString());
-        }
-      }
-    }
-    
-    console.log('🔍 TIME DEBUG - Final AM time:', amTime?.toLocaleString() || 'null');
-    console.log('🔍 TIME DEBUG - Final PM time:', pmTime?.toLocaleString() || 'null');
-    console.log('🔍 TIME DEBUG - Final AM time Unix:', amTime?.getTime() || 'null');
-    console.log('🔍 TIME DEBUG - Final PM time Unix:', pmTime?.getTime() || 'null');
+    console.log('🔔 RANDOM NOTIF - Final schedule:');
+    console.log('  AM:', amTime?.toLocaleString() || 'null');
+    console.log('  PM:', pmTime?.toLocaleString() || 'null');
     
     return { amTime, pmTime };
   }
@@ -281,15 +204,15 @@ class NotificationServiceClass {
       // Cancel any existing random notifications
       await this.cancelAllRandomNotifications();
 
-      // Generate two random times for today (AM and PM)
+      // Generate random times within specified windows
       const { amTime, pmTime } = this.generateRandomNotificationTimesForToday();
       const scheduledIds: string[] = [];
       
-      // Schedule AM notification
+      // Schedule morning notification (9:30-10:30 AM)
       if (amTime) {
         const amMessage = RANDOM_APP_MESSAGES[Math.floor(Math.random() * RANDOM_APP_MESSAGES.length)];
-        console.log('Scheduling AM notification for:', amTime.toLocaleString());
-        console.log('AM message:', amMessage.title);
+        console.log('🔔 RANDOM NOTIF - Scheduling morning notification for:', amTime.toLocaleString());
+        console.log('🔔 RANDOM NOTIF - Morning message:', amMessage.title);
 
         try {
           const trigger = { type: 'date', date: amTime } as const;
@@ -301,6 +224,7 @@ class NotificationServiceClass {
                 type: 'random_app_engagement',
                 isScheduled: true,
                 slot: 'am',
+                scheduledFor: amTime.toISOString(),
               },
               sound: 'default',
               priority: Notifications.AndroidNotificationPriority.DEFAULT,
@@ -309,17 +233,17 @@ class NotificationServiceClass {
           });
           
           scheduledIds.push(amNotificationId);
-          console.log(`Scheduled AM notification ${amNotificationId} for ${amTime.toLocaleString()}`);
+          console.log(`🔔 RANDOM NOTIF - Scheduled morning notification ${amNotificationId}`);
         } catch (error) {
-          console.error('Failed to schedule AM notification:', error);
+          console.error('🔔 RANDOM NOTIF - Failed to schedule morning notification:', error);
         }
       }
       
-      // Schedule PM notification
+      // Schedule evening notification (7:30-8:30 PM)
       if (pmTime) {
         const pmMessage = RANDOM_APP_MESSAGES[Math.floor(Math.random() * RANDOM_APP_MESSAGES.length)];
-        console.log('Scheduling PM notification for:', pmTime.toLocaleString());
-        console.log('PM message:', pmMessage.title);
+        console.log('🔔 RANDOM NOTIF - Scheduling evening notification for:', pmTime.toLocaleString());
+        console.log('🔔 RANDOM NOTIF - Evening message:', pmMessage.title);
 
         try {
           const trigger = { type: 'date', date: pmTime } as const;
@@ -331,6 +255,7 @@ class NotificationServiceClass {
                 type: 'random_app_engagement',
                 isScheduled: true,
                 slot: 'pm',
+                scheduledFor: pmTime.toISOString(),
               },
               sound: 'default',
               priority: Notifications.AndroidNotificationPriority.DEFAULT,
@@ -339,9 +264,9 @@ class NotificationServiceClass {
           });
           
           scheduledIds.push(pmNotificationId);
-          console.log(`Scheduled PM notification ${pmNotificationId} for ${pmTime.toLocaleString()}`);
+          console.log(`🔔 RANDOM NOTIF - Scheduled evening notification ${pmNotificationId}`);
         } catch (error) {
-          console.error('Failed to schedule PM notification:', error);
+          console.error('🔔 RANDOM NOTIF - Failed to schedule evening notification:', error);
         }
       }
 
@@ -350,19 +275,22 @@ class NotificationServiceClass {
       await AsyncStorage.setItem('random_notification_ids', JSON.stringify(scheduledIds));
       await AsyncStorage.setItem('random_notifications_date', new Date().toDateString());
 
-      console.log(`Scheduled ${scheduledIds.length} random notifications for today`);
+      console.log(`🔔 RANDOM NOTIF - Successfully scheduled ${scheduledIds.length} random notifications`);
       return scheduledIds;
     } catch (error) {
-      console.error('Failed to schedule random app notifications:', error);
+      console.error('🔔 RANDOM NOTIF - Failed to schedule random app notifications:', error);
       return null;
     }
   }
 
   private async cancelAllRandomNotifications() {
     try {
+      console.log('🔔 RANDOM NOTIF - Cancelling all random notifications...');
+      
       // Cancel using stored IDs
       for (const id of this.randomNotificationIds) {
-        await this.cancelNotification(id);
+        await cancelById(id);
+        console.log('🔔 RANDOM NOTIF - Cancelled notification:', id);
       }
       
       // Also try to cancel using stored IDs from AsyncStorage
@@ -370,7 +298,17 @@ class NotificationServiceClass {
       if (storedIds) {
         const ids = JSON.parse(storedIds);
         for (const id of ids) {
-          await this.cancelNotification(id);
+          await cancelById(id);
+          console.log('🔔 RANDOM NOTIF - Cancelled stored notification:', id);
+        }
+      }
+      
+      // Additionally, cancel all notifications with random_app_engagement type
+      const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+      for (const notification of allScheduled) {
+        if (notification.content.data?.type === 'random_app_engagement') {
+          await cancelById(notification.identifier);
+          console.log('🔔 RANDOM NOTIF - Cancelled random engagement notification:', notification.identifier);
         }
       }
       
@@ -378,8 +316,10 @@ class NotificationServiceClass {
       this.randomNotificationIds = [];
       await AsyncStorage.removeItem('random_notification_ids');
       await AsyncStorage.removeItem('random_notifications_date');
+      
+      console.log('🔔 RANDOM NOTIF - All random notifications cancelled and storage cleared');
     } catch (error) {
-      console.error('Failed to cancel random notifications:', error);
+      console.error('🔔 RANDOM NOTIF - Failed to cancel random notifications:', error);
     }
   }
 
@@ -431,31 +371,48 @@ class NotificationServiceClass {
         return;
       }
 
-      console.log('Starting random app notifications...');
+      console.log('🔔 RANDOM NOTIF - Starting random app notifications...');
       
       // Check if we've already scheduled notifications for today
       const lastScheduledDate = await AsyncStorage.getItem('random_notifications_date');
       const today = new Date().toDateString();
       
       if (lastScheduledDate === today) {
-        console.log('Random notifications already scheduled for today');
+        console.log('🔔 RANDOM NOTIF - Random notifications already scheduled for today');
+        
+        // Verify the notifications are still scheduled
+        const storedIds = await AsyncStorage.getItem('random_notification_ids');
+        if (storedIds) {
+          const ids = JSON.parse(storedIds);
+          const allScheduled = await Notifications.getAllScheduledNotificationsAsync();
+          const stillScheduled = ids.filter(id => 
+            allScheduled.some(notif => notif.identifier === id)
+          );
+          
+          if (stillScheduled.length === ids.length) {
+            console.log('🔔 RANDOM NOTIF - All notifications still scheduled, no action needed');
+            return;
+          } else {
+            console.log('🔔 RANDOM NOTIF - Some notifications missing, rescheduling...');
+          }
+        }
         return;
       }
       
       // Schedule new notifications for today
       await this.scheduleRandomAppNotification();
     } catch (error) {
-      console.error('Failed to start random app notifications:', error);
+      console.error('🔔 RANDOM NOTIF - Failed to start random app notifications:', error);
     }
   }
 
   async stopRandomAppNotifications() {
     try {
-      console.log('Stopping random app notifications...');
+      console.log('🔔 RANDOM NOTIF - Stopping random app notifications...');
       await this.cancelAllRandomNotifications();
-      console.log('Random app notifications stopped');
+      console.log('🔔 RANDOM NOTIF - Random app notifications stopped');
     } catch (error) {
-      console.error('Failed to stop random app notifications:', error);
+      console.error('🔔 RANDOM NOTIF - Failed to stop random app notifications:', error);
     }
   }
 
@@ -490,15 +447,20 @@ class NotificationServiceClass {
   }
 
   async cancelNotification(notificationId: string) {
-    await cancelById(notificationId);
+    try {
+      await cancelById(notificationId);
+      console.log('🔔 NOTIF - Cancelled notification:', notificationId);
+    } catch (error) {
+      console.error('🔔 NOTIF - Failed to cancel notification:', notificationId, error);
+    }
   }
 
   async cancelAllNotifications() {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync();
-      console.log('Cancelled all scheduled notifications');
+      console.log('🔔 NOTIF - Cancelled all scheduled notifications');
     } catch (error) {
-      console.error('Failed to cancel all notifications:', error);
+      console.error('🔔 NOTIF - Failed to cancel all notifications:', error);
     }
   }
 
@@ -506,7 +468,7 @@ class NotificationServiceClass {
     try {
       return await Notifications.getAllScheduledNotificationsAsync();
     } catch (error) {
-      console.error('Failed to get scheduled notifications:', error);
+      console.error('🔔 NOTIF - Failed to get scheduled notifications:', error);
       return [];
     }
   }
