@@ -97,13 +97,8 @@ export function EditScheduledTextModal({ visible, onClose, onTextUpdated, schedu
     }
 
     // Parse the scheduled date and time
-    let scheduledDateTime;
-    if (typeof scheduledText.scheduledFor === 'string') {
-      const utcDate = new Date(scheduledText.scheduledFor);
-      scheduledDateTime = new Date(utcDate.getTime() + (utcDate.getTimezoneOffset() * 60000));
-    } else {
-      scheduledDateTime = new Date(scheduledText.scheduledFor);
-    }
+    // Parse the scheduled date and time - JavaScript Date constructor handles timezone conversion automatically
+    const scheduledDateTime = new Date(scheduledText.scheduledFor);
     
     // Use local date components
     const year = scheduledDateTime.getFullYear();

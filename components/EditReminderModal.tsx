@@ -86,15 +86,8 @@ export function EditReminderModal({ visible, onClose, onReminderUpdated, reminde
     setSelectedProfile(reminder.profileId || null);
 
     // Parse the scheduled date and time - handle both Date objects and ISO strings
-    let scheduledDateTime;
-    if (typeof reminder.scheduledFor === 'string') {
-      // If it's an ISO string from database, parse it as UTC then convert to local
-      const utcDate = new Date(reminder.scheduledFor);
-      scheduledDateTime = new Date(utcDate.getTime() + (utcDate.getTimezoneOffset() * 60000));
-    } else {
-      // If it's already a Date object, use it directly
-      scheduledDateTime = new Date(reminder.scheduledFor);
-    }
+    // Parse the scheduled date and time - JavaScript Date constructor handles timezone conversion automatically
+    const scheduledDateTime = new Date(reminder.scheduledFor);
     
     // Use local date components
     const year = scheduledDateTime.getFullYear();
